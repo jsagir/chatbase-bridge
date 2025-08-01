@@ -28,16 +28,16 @@ module.exports = async (req, res) => {
     }
     
     // Get message from request
-    const { messages } = req.body;
+    const { conversation } = req.body;
     
-    if (!messages || !Array.isArray(messages)) {
+    if (!conversation || !Array.isArray(conversation)) {
       return res.status(400).json({
-        error: 'Invalid request. Expected messages array.'
+        error: 'Invalid request. Expected conversation array.'
       });
     }
     
     // Get the user's message
-    const userMessage = messages
+    const userMessage = conversation
       .filter(msg => msg.role === 'user')
       .map(msg => msg.content)
       .join(' ');
