@@ -1,5 +1,4 @@
 const axios = require('axios');
-
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -27,7 +26,7 @@ module.exports = async (req, res) => {
       });
     }
     
-    // Get message from request
+    // Get conversation from request
     const { conversation } = req.body;
     
     if (!conversation || !Array.isArray(conversation)) {
@@ -36,17 +35,11 @@ module.exports = async (req, res) => {
       });
     }
     
-    // Get the user's message
-    const userMessage = conversation
-      .filter(msg => msg.role === 'user')
-      .map(msg => msg.content)
-      .join(' ');
-    
-    // Call Chatbase API
+    // Call Chatbase API with the full conversation
     const response = await axios.post(
       'https://www.chatbase.co/api/v1/chat',
       {
-        messages: [{ role: 'user', content: userMessage }],
+        messages: conversation,
         chatbotId: CHATBOT_ID,
         stream: false
       },
