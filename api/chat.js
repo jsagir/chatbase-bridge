@@ -1,5 +1,4 @@
 const axios = require('axios');
-const crypto = require('crypto');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -17,27 +16,14 @@ module.exports = async (req, res) => {
   try {
     const CHATBASE_API_KEY = process.env.CHATBASE_API;
     const CHATBOT_ID = process.env.CHATBOT_ID;
-    const CHATBASE_SECRET_KEY = process.env.CHATBASE_SECRET_KEY;
     
-    console.log('Environment check:', { 
-      hasApi: !!process.env.CHATBASE_API, 
-      hasBot: !!process.env.CHATBOT_ID, 
-      hasSecret: !!process.env.CHATBASE_SECRET_KEY,
-      secretLength: process.env.CHATBASE_SECRET_KEY?.length
-    });
-    
-    if (!CHATBASE_API_KEY || !CHATBOT_ID || !CHATBASE_SECRET_KEY) {
+    if (!CHATBASE_API_KEY || !CHATBOT_ID) {
       return res.status(500).json({
-        error: 'Missing configuration. Please set all environment variables.',
-        missing: {
-          api: !CHATBASE_API_KEY,
-          chatbot: !CHATBOT_ID,
-          secret: !CHATBASE_SECRET_KEY
-        }
+        error: 'Missing configuration. Please set environment variables.'
       });
     }
     
-    const { conversation, userId = 'default-user' } = req.body;
+    const { conversation } = req.body;
     
     if (!conversation || !Array.isArray(conversation)) {
       return res.status(400).json({
@@ -45,21 +31,15 @@ module.exports = async (req, res) => {
       });
     }
     
-    // Generate HMAC for user authentication
-    const userHash = crypto.createHmac('sha256', CHATBASE_SECRET_KEY)
-      .update(userId)
-      .digest('hex');
-    
-    console.log('HMAC generated:', { userId, hashLength: userHash.length });
+    console.log('Calling Chatbase without HMAC...');
     
     const response = await axios.post(
       'https://www.chatbase.co/api/v1/chat',
       {
         messages: conversation,
         chatbotId: CHATBOT_ID,
-        user_id: userId,        // Changed from userId
-        user_hash: userHash,    // Changed from userAuth
         stream: false
+        // NO user_id or user_hash
       },
       {
         headers: {
@@ -82,7 +62,8 @@ module.exports = async (req, res) => {
     return res.status(500).json({
       error: 'Failed to get response',
       details: error.message,
-      status: error.response?.status
+      status: error.response?.status,
+      apiResponse: error.response?.data
     });
   }
 };
